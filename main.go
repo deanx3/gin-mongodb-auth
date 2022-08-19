@@ -26,6 +26,7 @@ func main() {
 
 func startGinServer() {
 	AuthController := controllers.NewAuthController()
+	HomeController := controllers.NewHomeController()
 
 	server := gin.Default()
 	router := server.Group("/api")
@@ -36,13 +37,13 @@ func startGinServer() {
 		AllowHeaders:     []string{"Origin"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-		AllowOriginFunc: func(origin string) bool {
-			return origin == "https://github.com"
-		},
+		// AllowOriginFunc: func(origin string) bool {
+		// 	return origin == "https://github.com"
+		// },
 		MaxAge: 12 * time.Hour,
 	}))
 
 	AuthController.AuthRoutes(router)
-
+	HomeController.HomeRoutes(router)
 	server.Run()
 }
