@@ -6,6 +6,7 @@ import (
 	"github.com/deanx3/gin-mongodb-auth/helpers"
 	"github.com/deanx3/gin-mongodb-auth/models"
 	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +19,26 @@ func NewAuthController() *AuthController {
 }
 
 func (auth *AuthController) login(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{"status": "success"})
+	email := ctx.PostForm("email")
+	password := ctx.PostForm("password")
+	login := models.LoginResponse{Email: email, Password: password}
+
+	err := login.ValidateResponse()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "failed", "error": err.Error()})
+		return
+	}
+
+	user := &models.User{}
+
+	_ = mgm.Coll(user).First(bson.M{"email": login.Email}, user)
+
+	err = user.GenerateToken()
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"status": "failed", "error": err.Error()})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"status": "success", "user": user})
 }
 
 func (auth *AuthController) register(ctx *gin.Context) {
